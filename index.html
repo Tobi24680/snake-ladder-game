@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake and Ladder Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+            padding: 30px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 5px;
+            margin-bottom: 30px;
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .square {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+            position: relative;
+        }
+
+        .square:hover {
+            transform: scale(1.1);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .square.player-here {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            box-shadow: 0 0 15px rgba(245, 87, 108, 0.6);
+            font-size: 1.2em;
+        }
+
+        .square.snake {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
+        .square.ladder {
+            background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .reset-btn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .info-panel {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .current-player {
+            font-size: 1.1em;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .player-color {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            vertical-align: middle;
+            margin-right: 5px;
+        }
+
+        .dice-result {
+            font-size: 1.5em;
+            color: #667eea;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .position-info {
+            font-size: 0.95em;
+            color: #666;
+            margin: 5px 0;
+        }
+
+        .game-status {
+            text-align: center;
+            padding: 15px;
+            background: #e8f5e9;
+            border-radius: 8px;
+            color: #2e7d32;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .game-status.show {
+            display: block;
+        }
+
+        .game-status.winner {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            font-size: 1.2em;
+        }
+
+        .players-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .player-card {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+            text-align: center;
+        }
+
+        .player-card.active {
+            border-color: #667eea;
+            background: #f0f4ff;
+            font-weight: bold;
+        }
+
+        .player-name {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .player-position {
+            font-size: 1.5em;
+            color: #667eea;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9em;
+        }
+
+        .legend-square {
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+        }
+
+        .legend-square.player {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .legend-square.snake {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
+        .legend-square.ladder {
+            background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .game-board {
+                gap: 3px;
+                padding: 10px;
+            }
+
+            .square {
+                font-size: 0.7em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Snake & Ladder 🎮</h1>
+        <p class="subtitle">Classic Board Game</p>
+
+        <div class="controls">
+            <div class="control-group">
+                <label for="playerCount">Number of Players:</label>
+                <select id="playerCount">
+                    <option value="2">2 Players</option>
+                    <option value="3">3 Players</option>
+                    <option value="4">4 Players</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="button-group">
+            <button onclick="initGame()">Start Game</button>
+            <button class="reset-btn" onclick="resetGame()">Reset</button>
+        </div>
+
+        <div id="gameStatus" class="game-status"></div>
+
+        <div class="info-panel">
+            <div class="current-player" id="currentPlayer">Select players and start!</div>
+            <div id="diceResult" class="dice-result" style="display: none;"></div>
+            <div id="positionInfo" class="position-info"></div>
+        </div>
+
+        <div class="players-list" id="playersList"></div>
+
+        <div class="game-board" id="gameBoard"></div>
+
+        <div class="button-group">
+            <button id="rollBtn" onclick="rollDice()" disabled>🎲 Roll Dice</button>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-square player"></div>
+                <span>Current Player</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-square snake"></div>
+                <span>Snake</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-square ladder"></div>
+                <span>Ladder</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const BOARD_SIZE = 100;
+        const SNAKES = {
+            16: 6, 47: 26, 49: 11, 56: 53, 62: 19,
+            87: 24, 93: 73, 95: 75, 98: 79
+        };
+        const LADDERS = {
+            1: 38, 4: 14, 9: 31, 21: 42, 28: 84,
+            51: 67, 72: 91, 80: 99
+        };
+        const PLAYER_COLORS = [
+            '#f093fb',
+            '#4facfe',
+            '#43e97b',
+            '#fa709a'
+        ];
+
+        let gameState = {
+            players: [],
+            currentPlayerIndex: 0,
+            gameStarted: false,
+            gameOver: false,
+            winner: null
+        };
+
+        function initGame() {
+            const playerCount = parseInt(document.getElementById('playerCount').value);
+            gameState.players = [];
+            for (let i = 0; i < playerCount; i++) {
+                gameState.players.push({
+                    name: `Player ${i + 1}`,
+                    position: 0,
+                    color: PLAYER_COLORS[i]
+                });
+            }
+            gameState.currentPlayerIndex = 0;
+            gameState.gameStarted = true;
+            gameState.gameOver = false;
+            gameState.winner = null;
+
+            renderBoard();
+            renderPlayersList();
+            updateCurrentPlayer();
+            document.getElementById('rollBtn').disabled = false;
+            document.getElementById('gameStatus').classList.remove('show');
+        }
+
+        function resetGame() {
+            gameState = {
+                players: [],
+                currentPlayerIndex: 0,
+                gameStarted: false,
+                gameOver: false,
+                winner: null
+            };
+            document.getElementById('rollBtn').disabled = true;
+            document.getElementById('currentPlayer').textContent = 'Select players and start!';
+            document.getElementById('diceResult').style.display = 'none';
+            document.getElementById('positionInfo').textContent = '';
+            document.getElementById('playersList').innerHTML = '';
+            document.getElementById('gameStatus').classList.remove('show');
+            renderBoard();
+        }
+
+        function renderBoard() {
+            const board = document.getElementById('gameBoard');
+            board.innerHTML = '';
+
+            for (let i = 1; i <= BOARD_SIZE; i++) {
+                const square = document.createElement('div');
+                square.className = 'square';
+                square.textContent = i;
+
+                if (SNAKES[i]) {
+                    square.classList.add('snake');
+                    square.title = `Snake: ${i} → ${SNAKES[i]}`;
+                } else if (LADDERS[i]) {
+                    square.classList.add('ladder');
+                    square.title = `Ladder: ${i} → ${LADDERS[i]}`;
+                }
+
+                // Highlight current player positions
+                gameState.players.forEach(player => {
+                    if (player.position === i) {
+                        square.classList.add('player-here');
+                        square.style.background = player.color;
+                    }
+                });
+
+                square.onclick = () => showSquareInfo(i);
+                board.appendChild(square);
+            }
+        }
+
+        function renderPlayersList() {
+            const list = document.getElementById('playersList');
+            list.innerHTML = '';
+
+            gameState.players.forEach((player, index) => {
+                const card = document.createElement('div');
+                card.className = 'player-card';
+                if (index === gameState.currentPlayerIndex && gameState.gameStarted) {
+                    card.classList.add('active');
+                }
+                card.innerHTML = `
+                    <div class="player-name">${player.name}</div>
+                    <div class="player-position">${player.position}</div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        function updateCurrentPlayer() {
+            if (!gameState.gameStarted) return;
+            
+            const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+            document.getElementById('currentPlayer').innerHTML = 
+                `<span class="player-color" style="background: ${currentPlayer.color}"></span>
+                 ${currentPlayer.name}'s Turn - Position: ${currentPlayer.position}`;
+            renderPlayersList();
+        }
+
+        function rollDice() {
+            if (!gameState.gameStarted || gameState.gameOver) return;
+
+            const diceValue = Math.floor(Math.random() * 6) + 1;
+            const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+            let newPosition = currentPlayer.position + diceValue;
+
+            document.getElementById('diceResult').textContent = `🎲 Rolled: ${diceValue}`;
+            document.getElementById('diceResult').style.display = 'block';
+
+            // Check if position exceeds board
+            if (newPosition > BOARD_SIZE) {
+                document.getElementById('positionInfo').textContent = 
+                    `Can't move! Would exceed ${BOARD_SIZE}. Stay at ${currentPlayer.position}`;
+            } else {
+                let message = `Moved to ${newPosition}`;
+
+                // Check for snakes
+                if (SNAKES[newPosition]) {
+                    newPosition = SNAKES[newPosition];
+                    message += ` - 🐍 Snake! Slide to ${newPosition}`;
+                }
+                // Check for ladders
+                else if (LADDERS[newPosition]) {
+                    newPosition = LADDERS[newPosition];
+                    message += ` - 🪜 Ladder! Climb to ${newPosition}`;
+                }
+
+                currentPlayer.position = newPosition;
+                document.getElementById('positionInfo').textContent = message;
+
+                // Check for winner
+                if (newPosition === BOARD_SIZE) {
+                    gameState.gameOver = true;
+                    gameState.winner = currentPlayer.name;
+                    showGameOver();
+                    return;
+                }
+            }
+
+            // Move to next player
+            gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
+            
+            renderBoard();
+            updateCurrentPlayer();
+        }
+
+        function showGameOver() {
+            const statusDiv = document.getElementById('gameStatus');
+            statusDiv.textContent = `🎉 ${gameState.winner} Won! 🎉`;
+            statusDiv.classList.add('show', 'winner');
+            document.getElementById('rollBtn').disabled = true;
+        }
+
+        function showSquareInfo(squareNumber) {
+            if (SNAKES[squareNumber]) {
+                alert(`🐍 Snake at ${squareNumber}\nSlides down to ${SNAKES[squareNumber]}`);
+            } else if (LADDERS[squareNumber]) {
+                alert(`🪜 Ladder at ${squareNumber}\nClimbs up to ${LADDERS[squareNumber]}`);
+            }
+        }
+
+        // Initialize empty board
+        renderBoard();
+    </script>
+</body>
+</html>
